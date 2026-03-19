@@ -1,0 +1,95 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f1117;
+  color: white;
+}
+
+.app {
+  text-align: center;
+  padding: 40px;
+}
+
+.title {
+  font-size: 42px;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+}
+
+/* 🚨 Main Panic Button */
+.panic-btn {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: none;
+  font-size: 60px;
+  background: #e63946;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(230, 57, 70, 0.6);
+  transition: 0.2s;
+}
+
+.panic-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 70px rgba(230, 57, 70, 0.9);
+}
+
+.panic-btn:active {
+  transform: scale(0.95);
+}
+
+.panic-label {
+  margin-top: 15px;
+  color: #aaa;
+}
+
+/* ⚙️ Action buttons */
+.actions {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.action-btn {
+  padding: 12px 20px;
+  background: #1f2933;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.action-btn:hover {
+  background: #2c3e50;
+  transform: translateY(-2px);
+}
+
+/* Stop button */
+.stop-btn {
+  margin-top: 25px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid #e63946;
+  color: #e63946;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.stop-btn:hover {
+  background: #e63946;
+  color: white;
+}
+
+/* Status */
+.status {
+  margin-top: 25px;
+  padding: 12px;
+  background: #1a1d23;
+  border-radius: 10px;
+  display: inline-block;
+  color: #8be9fd;
+}
