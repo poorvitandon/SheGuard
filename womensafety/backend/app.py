@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from twilio.rest import Client
 from dotenv import load_dotenv
 import os
+from model import predict_emotion   # ✅ IMPORTANT
 
 load_dotenv()
 app = Flask(__name__)
@@ -17,6 +18,21 @@ client = Client(ACCOUNT_SID, AUTH_TOKEN)
 @app.route("/")
 def home():
     return "Women Safety Backend Running"
+
+
+# ✅ FIXED: now properly outside
+@app.route("/predict", methods=["POST"])
+def predict():
+    file = request.files["file"]
+
+    file_path = "temp.webm"
+    file.save(file_path)
+
+    emotion = predict_emotion(file_path)
+    print("🔥 Predict API called")
+    print("Emotion:", emotion)
+
+    return jsonify({"emotion": emotion})
 
 
 @app.route("/alert", methods=["POST"])

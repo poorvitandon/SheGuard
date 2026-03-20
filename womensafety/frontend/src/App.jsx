@@ -35,6 +35,43 @@ function App() {
   const voiceFeature = () => {
     setStatus("🎤 Voice detection module");
   };
+  const recordVoice = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  const mediaRecorder = new MediaRecorder(stream);
+  let chunks = [];
+
+  mediaRecorder.start();
+  setStatus("🎤 Recording...");
+
+  mediaRecorder.ondataavailable = (e) => {
+    chunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = async () => {
+   const blob = new Blob(chunks, { type: "audio/webm" });
+
+    const formData = new FormData();
+    formData.append("file", blob, "voice.webm");
+
+    setStatus("Analyzing voice...");
+
+    const res = await axios.post(
+      "http://127.0.0.1:5000/predict",
+      formData
+    );
+
+    const emotion = res.data.emotion;
+    setStatus("Emotion: " + emotion);
+
+    if (emotion === "fear") {
+      sendAlert();
+      startAlarm();
+    }
+  };
+
+  setTimeout(() => mediaRecorder.stop(), 3000);
+};
 
   const cameraFeature = () => {
     setStatus("📸 Camera module");
@@ -59,7 +96,7 @@ function App() {
           🔊 Alarm
         </button>
 
-        <button className="action-btn" onClick={voiceFeature}>
+        <button className="action-btn" onClick={recordVoice}>
           🎤 Voice
         </button>
 
