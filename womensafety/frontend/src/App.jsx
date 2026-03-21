@@ -35,44 +35,74 @@ function App() {
   const voiceFeature = () => {
     setStatus("🎤 Voice detection module");
   };
-  const recordVoice = async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+ const recordVoice = async () => {
+  console.log("🎤 Button clicked");
 
-  const mediaRecorder = new MediaRecorder(stream);
-  let chunks = [];
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-  mediaRecorder.start();
-  setStatus("🎤 Recording...");
+    const mediaRecorder = new MediaRecorder(stream);
+    let chunks = [];
 
-  mediaRecorder.ondataavailable = (e) => {
-    chunks.push(e.data);
-  };
+    mediaRecorder.start();
+    setStatus("🎤 Recording...");
 
-  mediaRecorder.onstop = async () => {
-   const blob = new Blob(chunks, { type: "audio/webm" });
+    mediaRecorder.ondataavailable = (e) => {
+      chunks.push(e.data);
+    };
 
-    const formData = new FormData();
-    formData.append("file", blob, "voice.webm");
+    mediaRecorder.onstop = async () => {
+      console.log("⏹ Recording stopped");
 
-    setStatus("Analyzing voice...");
+      const blob = new Blob(chunks, { type: "audio/webm" });
 
-    const res = await axios.post(
-      "http://127.0.0.1:5000/predict",
-      formData
-    );
+      const formData = new FormData();
+      formData.append("file", blob, "voice.webm");
 
-    const emotion = res.data.emotion;
-    setStatus("Emotion: " + emotion);
+      setStatus("🧠 Analyzing voice...");
 
-    if (emotion === "fear") {
-      sendAlert();
-      startAlarm();
-    }
-  };
+      try {
+        console.log("📤 Sending to backend...");
 
-  setTimeout(() => mediaRecorder.stop(), 3000);
+        const res = await axios.post(
+          "http://127.0.0.1:5000/predict",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        console.log("✅ Response:", res.data);
+
+        const emotion = res.data.emotion;
+        setStatus("Emotion: " + emotion);
+
+        if (emotion.toLowerCase() === "fear") {
+          setStatus("🚨 Distress detected!");
+          sendAlert();
+          startAlarm();
+        } else {
+          setStatus("✅ Safe");
+        }
+
+      } catch (error) {
+        console.error("❌ Backend Error:", error);
+        setStatus("❌ Failed to analyze voice");
+      }
+    };
+
+    // ⏱ Stop after 3 seconds
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 3000);
+
+  } catch (error) {
+    console.error("❌ Mic Error:", error);
+    setStatus("❌ Microphone access denied");
+  }
 };
-
   const cameraFeature = () => {
     setStatus("📸 Camera module");
   };

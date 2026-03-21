@@ -3,14 +3,17 @@ import numpy as np
 import pickle
 from pydub import AudioSegment
 
+
+
 def convert_to_wav(input_path):
-    audio = AudioSegment.from_file(input_path)
-    output_path = "converted.wav"
-    audio.export(output_path, format="wav")
-    return output_path
-# load model + scaler
-model = pickle.load(open("voice_model.pkl", "rb"))
-scaler = pickle.load(open("scaler.pkl", "rb"))
+    try:
+        audio = AudioSegment.from_file(input_path, format="webm")
+        output_path = "converted.wav"
+        audio.export(output_path, format="wav")
+        return output_path
+    except Exception as e:
+        print("❌ Conversion Error:", e)
+        return None
 
 def extract_features(file_path):
     audio, sr = librosa.load(file_path, duration=3)
@@ -26,6 +29,9 @@ def extract_features(file_path):
 
 def predict_emotion(file_path):
     wav_path = convert_to_wav(file_path)
+
+    if wav_path is None:
+        return "error"
 
     features = extract_features(wav_path)
     features = scaler.transform(features)

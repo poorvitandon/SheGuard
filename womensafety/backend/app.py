@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify
 from twilio.rest import Client
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from model import predict_emotion   # ✅ IMPORTANT
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app)
 
 # Twilio credentials
 ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
@@ -56,3 +58,6 @@ def alert():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+    print("📥 File received")
+print("📂 Saved:", file_path)
