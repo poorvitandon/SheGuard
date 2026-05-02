@@ -4,7 +4,9 @@ import "./App.css";
 
 function App() {
   const [status, setStatus] = useState("System Ready");
+  const [pendingAlert, setPendingAlert] = useState(false);
 
+  // 🚨 Send SMS Alert
   const sendAlert = () => {
     setStatus("📍 Getting location...");
 
@@ -18,6 +20,7 @@ function App() {
     });
   };
 
+  // 🔊 Alarm
   const startAlarm = () => {
     const audio = document.getElementById("alarmAudio");
     audio.loop = true;
@@ -32,77 +35,88 @@ function App() {
     setStatus("Alarm Stopped");
   };
 
-  const voiceFeature = () => {
-    setStatus("🎤 Voice detection module");
-  };
- const recordVoice = async () => {
-  console.log("🎤 Button clicked");
+  // 🎤 Voice Detection (ML)
+  const recordVoice = async () => {
+    console.log("🎤 Button clicked");
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const mediaRecorder = new MediaRecorder(stream);
-    let chunks = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      let chunks = [];
 
-    mediaRecorder.start();
-    setStatus("🎤 Recording...");
+      mediaRecorder.start();
+      setStatus("🎤 Recording...");
 
-    mediaRecorder.ondataavailable = (e) => {
-      chunks.push(e.data);
-    };
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
 
-    mediaRecorder.onstop = async () => {
-      console.log("⏹ Recording stopped");
+      mediaRecorder.onstop = async () => {
+        console.log("⏹ Recording stopped");
 
-      const blob = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: "audio/webm" });
 
-      const formData = new FormData();
-      formData.append("file", blob, "voice.webm");
+        const formData = new FormData();
+        formData.append("file", blob, "voice.webm");
 
-      setStatus("🧠 Analyzing voice...");
+        setStatus("🧠 Analyzing voice...");
 
-      try {
-        console.log("📤 Sending to backend...");
+        try {
+          console.log("📤 Sending to backend...");
 
-        const res = await axios.post(
-          "http://127.0.0.1:5000/predict",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
+          const res = await axios.post(
+            "http://127.0.0.1:5000/predict",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          console.log("✅ Response:", res.data);
+
+          const emotion = res.data.emotion;
+          setStatus("Emotion: " + emotion);
+
+          // ✅ SMART LOGIC (REDUCES FALSE ALARMS)
+          if (emotion.toLowerCase() === "fear") {
+            setPendingAlert(true);
+            setStatus("⚠️ Possible distress detected...");
+
+            setTimeout(() => {
+              if (pendingAlert) {
+                setStatus("🚨 Distress confirmed!");
+                sendAlert();
+                startAlarm();
+                setPendingAlert(false);
+              }
+            }, 2000);
+
+          } else {
+            setStatus("✅ Safe");
+            setPendingAlert(false);
           }
-        );
 
-        console.log("✅ Response:", res.data);
-
-        const emotion = res.data.emotion;
-        setStatus("Emotion: " + emotion);
-
-        if (emotion.toLowerCase() === "fear") {
-          setStatus("🚨 Distress detected!");
-          sendAlert();
-          startAlarm();
-        } else {
-          setStatus("✅ Safe");
+        } catch (error) {
+          console.error("❌ Backend Error:", error);
+          setStatus("❌ Failed to analyze voice");
         }
+      };
 
-      } catch (error) {
-        console.error("❌ Backend Error:", error);
-        setStatus("❌ Failed to analyze voice");
-      }
-    };
+      // ⏱ Stop after 3 seconds
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 3000);
 
-    // ⏱ Stop after 3 seconds
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 3000);
+    } catch (error) {
+      console.error("❌ Mic Error:", error);
+      setStatus("❌ Microphone access denied");
+    }
+  };
 
-  } catch (error) {
-    console.error("❌ Mic Error:", error);
-    setStatus("❌ Microphone access denied");
-  }
-};
+  // 📸 Camera (placeholder)
   const cameraFeature = () => {
     setStatus("📸 Camera module");
   };
@@ -112,14 +126,14 @@ function App() {
 
       <h1 className="title">🛡️ SheGuard</h1>
 
-      {/* 🔴 MAIN PANIC BUTTON */}
+      {/* 🔴 PANIC BUTTON */}
       <button className="panic-btn" onClick={sendAlert}>
         🚨
       </button>
 
       <p className="panic-label">Tap Immediately in Emergency</p>
 
-      {/* ⚙️ Secondary Controls */}
+      {/* ⚙️ ACTION BUTTONS */}
       <div className="actions">
 
         <button className="action-btn" onClick={startAlarm}>
@@ -136,14 +150,28 @@ function App() {
 
       </div>
 
-      {/* Stop Alarm */}
+      {/* 🛑 STOP ALARM */}
       <button className="stop-btn" onClick={stopAlarm}>
         Stop Alarm
       </button>
 
-      {/* Status */}
+      {/* 🚫 CANCEL ALERT (SMART FEATURE) */}
+      {pendingAlert && (
+        <button
+          className="cancel-btn"
+          onClick={() => {
+            setPendingAlert(false);
+            setStatus("❌ Alert cancelled");
+          }}
+        >
+          Cancel Alert
+        </button>
+      )}
+
+      {/* 📊 STATUS DISPLAY */}
       <div className="status">{status}</div>
 
+      {/* 🔊 AUDIO */}
       <audio id="alarmAudio" src="/alarm.mp3"></audio>
 
     </div>
