@@ -6,24 +6,43 @@ function App() {
   const [status, setStatus] = useState("System Ready");
 
   const sendAlert = () => {
-    setStatus("📍 Getting location...");
 
-    navigator.geolocation.getCurrentPosition((pos) => {
+  startAlarm();
+
+  setStatus("📍 Getting location...");
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      axios.post("http://127.0.0.1:5000/alert", { lat, lng })
+      axios
+        .post("http://127.0.0.1:5000/alert", { lat, lng })
         .then(() => setStatus("🚨 ALERT SENT"))
         .catch(() => setStatus("❌ ERROR"));
-    });
-  };
+    },
+    (err) => {
+      console.error(err);
+      setStatus("❌ Location access denied");
+    }
+  );
+};
 
   const startAlarm = () => {
-    const audio = document.getElementById("alarmAudio");
-    audio.loop = true;
-    audio.play();
-    setStatus("🔊 Alarm Activated");
-  };
+  const audio = document.getElementById("alarmAudio");
+
+  audio.loop = true;
+  audio.currentTime = 0;
+
+  audio.play()
+    .then(() => {
+      setStatus("🔊 Alarm Activated");
+    })
+    .catch((err) => {
+      console.log("Audio blocked:", err);
+      setStatus("⚠️ Click again to enable sound");
+    });
+};
 
   const stopAlarm = () => {
     const audio = document.getElementById("alarmAudio");
@@ -35,81 +54,77 @@ function App() {
   const voiceFeature = () => {
     setStatus("🎤 Voice detection module");
   };
- const recordVoice = async () => {
-  console.log("🎤 Button clicked");
+  const recordVoice = async () => {
+    console.log("🎤 Button clicked");
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const mediaRecorder = new MediaRecorder(stream);
-    let chunks = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      let chunks = [];
 
-    mediaRecorder.start();
-    setStatus("🎤 Recording...");
+      mediaRecorder.start();
+      setStatus("🎤 Recording...");
 
-    mediaRecorder.ondataavailable = (e) => {
-      chunks.push(e.data);
-    };
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
 
-    mediaRecorder.onstop = async () => {
-      console.log("⏹ Recording stopped");
+      mediaRecorder.onstop = async () => {
+        console.log("⏹ Recording stopped");
 
-      const blob = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: "audio/wav" });
 
-      const formData = new FormData();
-      formData.append("file", blob, "voice.webm");
+        const formData = new FormData();
+        formData.append("file", blob, "voice.wav");
 
-      setStatus("🧠 Analyzing voice...");
+        setStatus("🧠 Analyzing voice...");
 
-      try {
-        console.log("📤 Sending to backend...");
+        try {
+          console.log("📤 Sending to backend...");
 
-        const res = await axios.post(
-          "http://127.0.0.1:5000/predict",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
+          const res = await axios.post(
+            "http://127.0.0.1:5000/predict",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
             },
+          );
+
+          console.log("✅ Response:", res.data);
+
+          const emotion = res.data.emotion;
+
+          if (emotion.toLowerCase() === "fear") {
+            setStatus("🚨 Distress detected! Emotion: " + emotion);
+            sendAlert();
+            startAlarm();
+          } else {
+            setStatus("✅ Safe | Emotion: " + emotion);
           }
-        );
-
-        console.log("✅ Response:", res.data);
-
-        const emotion = res.data.emotion;
-        setStatus("Emotion: " + emotion);
-
-        if (emotion.toLowerCase() === "fear") {
-          setStatus("🚨 Distress detected!");
-          sendAlert();
-          startAlarm();
-        } else {
-          setStatus("✅ Safe");
+        } catch (error) {
+          console.error("❌ Backend Error:", error);
+          setStatus("❌ Failed to analyze voice");
         }
+      };
 
-      } catch (error) {
-        console.error("❌ Backend Error:", error);
-        setStatus("❌ Failed to analyze voice");
-      }
-    };
-
-    // ⏱ Stop after 3 seconds
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 3000);
-
-  } catch (error) {
-    console.error("❌ Mic Error:", error);
-    setStatus("❌ Microphone access denied");
-  }
-};
+      // ⏱ Stop after 3 seconds
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 3000);
+    } catch (error) {
+      console.error("❌ Mic Error:", error);
+      setStatus("❌ Microphone access denied");
+    }
+  };
   const cameraFeature = () => {
     setStatus("📸 Camera module");
   };
 
   return (
     <div className="app">
-
       <h1 className="title">🛡️ SheGuard</h1>
 
       {/* 🔴 MAIN PANIC BUTTON */}
@@ -121,7 +136,6 @@ function App() {
 
       {/* ⚙️ Secondary Controls */}
       <div className="actions">
-
         <button className="action-btn" onClick={startAlarm}>
           🔊 Alarm
         </button>
@@ -133,7 +147,6 @@ function App() {
         <button className="action-btn" onClick={cameraFeature}>
           📸 Camera
         </button>
-
       </div>
 
       {/* Stop Alarm */}
@@ -145,7 +158,6 @@ function App() {
       <div className="status">{status}</div>
 
       <audio id="alarmAudio" src="/alarm.mp3"></audio>
-
     </div>
   );
 }

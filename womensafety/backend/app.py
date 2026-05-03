@@ -1,3 +1,5 @@
+import smtplib
+from email.mime.text import MIMEText
 from flask import Flask, request, jsonify
 from twilio.rest import Client
 from flask_cors import CORS
@@ -39,23 +41,42 @@ def predict():
 
 @app.route("/alert", methods=["POST"])
 def alert():
-
-    data = request.json
+    data = request.get_json()
 
     latitude = data.get("lat")
     longitude = data.get("lng")
 
     location_link = f"https://maps.google.com/?q={latitude},{longitude}"
 
-    message = client.messages.create(
-        body=f"🚨 EMERGENCY! I need help. Location: {location_link}",
-        from_=TWILIO_PHONE,
-        to="+918081547882"
-    )
+    sender_email = "your_email@gmail.com"
+    password = "your_app_password"
 
-    return jsonify({"status": "SMS Sent"})
+    receiver_emails = [
+        "contact1@gmail.com",
+        "contact2@gmail.com"
+    ]
 
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, password)
 
+        for receiver_email in receiver_emails:
+            message = MIMEText(f"🚨 EMERGENCY ALERT!\nLocation: {location_link}")
+            message["Subject"] = "Emergency Alert"
+            message["From"] = sender_email
+            message["To"] = receiver_email
+
+            server.sendmail(sender_email, receiver_email, message.as_string())
+
+        server.quit()
+
+        return jsonify({"status": "Email sent to all contacts"})
+
+    except Exception as e:
+        print(e)
+        return jsonify({"status": "Error"})
+    
 if __name__ == "__main__":
     app.run(debug=True)
 
