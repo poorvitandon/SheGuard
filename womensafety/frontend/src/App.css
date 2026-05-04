@@ -1,95 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+:root {
+  --bg:          #0D0810;
+  --surface:     rgba(255, 183, 197, 0.04);
+  --border:      rgba(212, 160, 174, 0.12);
+  --border-mid:  rgba(212, 160, 174, 0.28);
+  --rose:        #D4A0AE;
+  --rose-bright: #E8C4CE;
+  --rose-faint:  rgba(212, 160, 174, 0.07);
+  --text:        #F0E6EA;
+  --muted:       rgba(212, 160, 174, 0.5);
+  --green:       #8EC9A2;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: #0f1117;
-  color: white;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
+/* ── Texture + ambient glow ── */
+.grain {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.glow-bg {
+  position: fixed; z-index: 0; pointer-events: none;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,100,130,0.1) 0%, transparent 65%);
+  top: 8%; left: 50%; transform: translateX(-50%);
+}
+
+/* ── Shell ── */
 .app {
-  text-align: center;
-  padding: 40px;
+  position: relative; z-index: 1;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center;
 }
 
-.title {
-  font-size: 42px;
-  margin-bottom: 30px;
-  letter-spacing: 1px;
+/* ── Top bar ── */
+.topbar {
+  width: 100%; max-width: 560px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 0.5px solid var(--border);
 }
 
-/* 🚨 Main Panic Button */
-.panic-btn {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  border: none;
-  font-size: 60px;
-  background: #e63946;
-  color: white;
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 600;
+  color: var(--text); letter-spacing: 0.04em;
+}
+.logo span { color: var(--rose); font-style: italic; }
+
+.pip-wrap { display: flex; align-items: center; gap: 0.5rem; }
+
+.live-pip {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 2.5s ease infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+.pip-label {
+  font-size: 0.68rem; letter-spacing: 0.14em;
+  color: var(--muted); text-transform: uppercase; font-weight: 300;
+}
+
+/* ── Main ── */
+.main {
+  flex: 1; width: 100%; max-width: 560px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2.5rem 1.5rem 3.5rem;
+  gap: 1.8rem;
+}
+
+/* ── SOS area ── */
+.sos-area {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.1rem;
+}
+
+.ring-wrap {
+  position: relative; width: 240px; height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.ring {
+  position: absolute; border-radius: 50%;
+  border: 0.5px solid var(--rose); opacity: 0;
+  animation: bloom 3.5s ease-out infinite;
+}
+.r1 { width: 200px; height: 200px; animation-delay: 0s; }
+.r2 { width: 225px; height: 225px; animation-delay: 1s; }
+.r3 { width: 240px; height: 240px; animation-delay: 2s; }
+
+@keyframes bloom {
+  0%   { transform: scale(0.75); opacity: 0.55; }
+  100% { transform: scale(1);    opacity: 0; }
+}
+
+.sos-btn {
+  position: relative; z-index: 2;
+  width: 150px; height: 150px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #2A1220, #180A10, #0C0308);
+  border: 1px solid rgba(212,160,174,0.32);
   cursor: pointer;
-  box-shadow: 0 0 40px rgba(230, 57, 70, 0.6);
-  transition: 0.2s;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  box-shadow:
+    0 0 0 1px rgba(212,160,174,0.08),
+    0 0 50px rgba(180,100,130,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 0 30px rgba(180,100,130,0.07);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.sos-btn:hover {
+  transform: scale(1.04);
+  border-color: rgba(212,160,174,0.55);
+  box-shadow: 0 0 0 1px rgba(212,160,174,0.2), 0 0 70px rgba(180,100,130,0.35), inset 0 0 40px rgba(180,100,130,0.1);
+}
+.sos-btn:active { transform: scale(0.97); }
+
+.sos-word {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; font-weight: 600;
+  color: var(--rose-bright); letter-spacing: 0.1em; line-height: 1;
+  text-shadow: 0 0 30px rgba(212,160,174,0.5);
+}
+.sos-hint {
+  font-size: 0.52rem; letter-spacing: 0.2em;
+  color: var(--muted); text-transform: uppercase; font-weight: 300;
+}
+.sos-caption {
+  font-size: 0.72rem; letter-spacing: 0.14em;
+  color: var(--muted); text-transform: uppercase; font-weight: 300;
 }
 
-.panic-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 70px rgba(230, 57, 70, 0.9);
+/* ── Status bar ── */
+.status-bar {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 1.4rem;
+  border: 0.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  min-width: 220px; justify-content: center;
+}
+.s-pip {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+}
+.s-text {
+  font-size: 0.7rem; letter-spacing: 0.16em;
+  text-transform: uppercase; font-weight: 400;
+  color: var(--muted);
 }
 
-.panic-btn:active {
-  transform: scale(0.95);
+/* ── Feature cards ── */
+.cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem; width: 100%;
 }
 
-.panic-label {
-  margin-top: 15px;
-  color: #aaa;
-}
-
-/* ⚙️ Action buttons */
-.actions {
-  margin-top: 40px;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.action-btn {
-  padding: 12px 20px;
-  background: #1f2933;
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 16px;
+.card {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.6rem;
+  padding: 1.4rem 1rem;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 18px;
+  color: var(--muted);
   cursor: pointer;
-  transition: 0.2s;
+  transition: border-color 0.25s, background 0.25s, transform 0.18s, color 0.25s;
+  position: relative; overflow: hidden;
+}
+.card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,160,174,0.3), transparent);
+  opacity: 0; transition: opacity 0.25s;
+}
+.card:hover {
+  border-color: var(--border-mid);
+  background: var(--rose-faint);
+  color: var(--rose);
+  transform: translateY(-3px);
+}
+.card:hover::after { opacity: 1; }
+.card:active { transform: translateY(0) scale(0.97); }
+
+.card-icon { width: 26px; height: 26px; }
+.card-icon svg { width: 100%; height: 100%; }
+
+.card-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-weight: 600;
+  letter-spacing: 0.05em; color: var(--rose-bright);
+}
+.card-sub {
+  font-size: 0.6rem; letter-spacing: 0.1em;
+  color: var(--muted); text-align: center;
+  font-weight: 300; text-transform: uppercase;
 }
 
-.action-btn:hover {
-  background: #2c3e50;
-  transform: translateY(-2px);
+/* ── Camera panel ── */
+.camera-panel {
+  width: 100%;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0;
 }
 
-/* Stop button */
-.stop-btn {
-  margin-top: 25px;
-  padding: 10px 18px;
+.camera-feed {
+  width: 100%; max-height: 280px;
+  object-fit: cover;
+  border-radius: 18px 18px 0 0;
+  display: block;
+}
+
+.camera-actions {
+  display: flex; gap: 0.8rem;
+  padding: 1rem;
+  width: 100%; justify-content: center;
+  border-top: 0.5px solid var(--border);
+}
+
+.cam-btn {
+  padding: 0.55rem 1.4rem;
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem; letter-spacing: 0.1em;
+  font-weight: 400; cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.cam-capture {
+  background: rgba(212,160,174,0.1);
+  border: 0.5px solid var(--border-mid);
+  color: var(--rose-bright);
+}
+.cam-capture:hover {
+  background: rgba(212,160,174,0.18);
+  border-color: var(--rose);
+}
+
+.cam-close {
   background: transparent;
-  border: 1px solid #e63946;
-  color: #e63946;
-  border-radius: 10px;
-  cursor: pointer;
+  border: 0.5px solid var(--border);
+  color: var(--muted);
+}
+.cam-close:hover {
+  border-color: var(--border-mid);
+  color: var(--rose);
 }
 
+/* ── Image preview ── */
+.preview-panel {
+  width: 100%;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.preview-label {
+  font-size: 0.65rem; letter-spacing: 0.18em;
+  color: var(--muted); text-transform: uppercase;
+  padding: 0.8rem 0 0.5rem; font-weight: 300;
+}
+
+.preview-img {
+  width: 100%; max-width: 280px;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 0.5px solid var(--border);
+}
+
+/* ── Stop alarm ── */
+.stop-btn {
+  padding: 0.6rem 1.8rem;
+  background: transparent;
+  border: 0.5px solid rgba(212,160,174,0.2);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem; letter-spacing: 0.14em;
+  text-transform: uppercase; cursor: pointer;
+  transition: all 0.2s;
+}
 .stop-btn:hover {
-  background: #e63946;
-  color: white;
+  border-color: var(--border-mid);
+  color: var(--rose);
 }
 
-/* Status */
-.status {
-  margin-top: 25px;
-  padding: 12px;
-  background: #1a1d23;
-  border-radius: 10px;
-  display: inline-block;
-  color: #8be9fd;
+/* ── Footer ── */
+.footer-note {
+  font-size: 0.65rem; letter-spacing: 0.08em;
+  color: rgba(212,160,174,0.28); text-align: center; font-weight: 300;
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .topbar { padding: 1.2rem; }
+  .main { padding: 2rem 1rem 3rem; }
+  .ring-wrap { width: 210px; height: 210px; }
+  .r1 { width: 175px; height: 175px; }
+  .r2 { width: 197px; height: 197px; }
+  .r3 { width: 210px; height: 210px; }
+  .sos-btn { width: 130px; height: 130px; }
+  .sos-word { font-size: 2.5rem; }
+  .cards { gap: 0.65rem; }
+  .card { padding: 1.1rem 0.7rem; }
 }

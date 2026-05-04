@@ -13,20 +13,23 @@ def convert_to_wav(input_path):
         audio.export(output_path, format="wav")
         return output_path
     except Exception as e:
-        print("❌ Conversion Error:", e)
+        print("❌ Conversion error:", e)
         return None
 
 def extract_features(file_path):
-    audio, sr = librosa.load(file_path, duration=3)
+    try:
+        audio, sr = librosa.load(file_path, duration=3)
 
-    mfcc = np.mean(librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=40).T, axis=0)
-    delta = np.mean(librosa.feature.delta(mfcc), axis=0)
-    chroma = np.mean(librosa.feature.chroma_stft(y=audio, sr=sr).T, axis=0)
-    mel = np.mean(librosa.feature.melspectrogram(y=audio, sr=sr).T, axis=0)
+        mfcc = np.mean(librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=40).T, axis=0)
+        delta = np.mean(librosa.feature.delta(mfcc), axis=0)
+        chroma = np.mean(librosa.feature.chroma_stft(y=audio, sr=sr).T, axis=0)
+        mel = np.mean(librosa.feature.melspectrogram(y=audio, sr=sr).T, axis=0)
 
-    features = np.hstack((mfcc, delta, chroma, mel))
+        return np.hstack((mfcc, delta, chroma, mel))
 
-    return features.reshape(1, -1)
+    except Exception as e:
+        print("❌ Feature error:", e)
+        return None
 
 def predict_emotion(file_path):
     wav_path = convert_to_wav(file_path)
@@ -36,22 +39,16 @@ def predict_emotion(file_path):
 
     features = extract_features(wav_path)
 
-    # reshape before scaling
-    features = scaler.transform(features.reshape(1, -1))
+    if features is None:
+        return "error"
 
-    probs = model.predict_proba(features)[0]
+    try:
+        features = scaler.transform(features.reshape(1, -1))
+        prediction = model.predict(features)[0]
 
-    # ✅ ALL LOGIC INSIDE FUNCTION
-    fear_index = list(model.classes_).index("fear")
-    calm_index = list(model.classes_).index("calm")
+        print("Emotion:", prediction)
+        return prediction
 
-    fear_prob = probs[fear_index]
-    calm_prob = probs[calm_index]
-
-    print("Fear:", fear_prob, "Calm:", calm_prob)  # debug
-
-    # ✅ Better decision rule
-    if fear_prob > 0.95 and calm_prob <0.4:
-        return "fear"
-    else:
-        return "calm"
+    except Exception as e:
+        print("❌ Prediction error:", e)
+        return "error"
